@@ -4,7 +4,7 @@ import logging
 from fastapi import FastAPI, File, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse, JSONResponse
-from fastapi import APIRouter
+ # from fastapi import APIRouter  # Not used, safe to remove
 import uuid
 import json
 import datetime
@@ -31,15 +31,21 @@ logging.basicConfig(
     ]
 )
 
+
+
 # Robust Tesseract path detection
 TESSERACT_PATHS = ["/usr/bin/tesseract", "/usr/local/bin/tesseract"]
+tess_found = False
 for path in TESSERACT_PATHS:
     if os.path.exists(path):
         pytesseract.pytesseract.tesseract_cmd = path
         logging.info(f"Using tesseract at: {path}")
+        tess_found = True
         break
-else:
-    logging.info("Using system tesseract from PATH (no hardcoded path found)")
+if not tess_found:
+    logging.info(f"Checked paths: {TESSERACT_PATHS}. Using system tesseract from PATH (no hardcoded path found)")
+
+
 
 
 
@@ -47,8 +53,9 @@ app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-    "http://localhost:8080",
-    "https://redaction-frontend.vercel.app"],
+        "http://localhost:8080",
+        "https://redaction-frontend.vercel.app"
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"]
@@ -201,21 +208,8 @@ def save_redaction_metadata(unique_id, file_path, processing_time):
     with open(meta_path, 'w', encoding='utf-8') as f:
         json.dump(data, f, indent=2)
 
-# Endpoint to get redaction history
 
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
-app = FastAPI()
-
-# Enable CORS for frontend
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["http://localhost:8080", "*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
+# Endpoint to get redaction history and root
 @app.get("/")
 def root():
     return {"status": "Apollo Health backend is live"}
@@ -231,7 +225,6 @@ def get_redaction_history():
         data = []
     return data
 
-# Endpoint to download a redacted file by id
 from fastapi.responses import FileResponse
 @app.get('/download/{file_id}')
 def download_redacted_file(file_id: str):
@@ -305,6 +298,3 @@ async def redact(
                 os.remove(file_location)
         except Exception as cleanup_err:
             logging.warning(f"Cleanup error: {cleanup_err}")
-        except Exception as cleanup_err:
-            logging.warning(f"Cleanup error: {cleanup_err}")
-import os
