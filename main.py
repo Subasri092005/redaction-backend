@@ -190,6 +190,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+@app.get("/")
+def root():
+    return {"status": "Apollo Health backend is live"}
+
+
 @app.get('/history')
 def get_redaction_history():
     meta_path = os.path.join(os.path.dirname(__file__), 'redacted_files', 'history.json')
