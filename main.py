@@ -1,3 +1,6 @@
+
+import os
+import logging
 from fastapi import FastAPI, File, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse, JSONResponse
@@ -7,7 +10,6 @@ import json
 import datetime
 import time
 import pytesseract
-pytesseract.pytesseract.tesseract_cmd = "/usr/bin/tesseract"
 from PIL import Image, ImageDraw
 import pdfplumber
 import spacy
@@ -17,7 +19,27 @@ from io import BytesIO
 from reportlab.platypus import SimpleDocTemplate, Paragraph
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib.pagesizes import letter
-import os
+
+# Setup logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s %(levelname)s %(message)s',
+    handlers=[
+        logging.StreamHandler(),
+        # Uncomment below to log to a file as well
+        # logging.FileHandler("backend.log")
+    ]
+)
+
+# Robust Tesseract path detection
+TESSERACT_PATHS = ["/usr/bin/tesseract", "/usr/local/bin/tesseract"]
+for path in TESSERACT_PATHS:
+    if os.path.exists(path):
+        pytesseract.pytesseract.tesseract_cmd = path
+        logging.info(f"Using tesseract at: {path}")
+        break
+else:
+    logging.info("Using system tesseract from PATH (no hardcoded path found)")
 
 
 
@@ -254,7 +276,6 @@ async def redact(
         with open(file_location, "wb") as buffer:
             buffer.write(await file.read())
 
-
         ext = file.filename.lower().split('.')[-1]
         # Parse custom_types if provided
         custom_types_list = None
@@ -265,9 +286,9 @@ async def redact(
                 custom_types_list = [s.strip() for s in custom_types.split(",") if s.strip()]
 
         # Logging for debugging
-        print("File received:", file.filename)
-        print("Redaction level:", redaction_level)
-        print("Custom types:", custom_types_list)
+        logging.info(f"File received: {file.filename}")
+        logging.info(f"Redaction level: {redaction_level}")
+        logging.info(f"Custom types: {custom_types_list}")
 
         if ext in ["png", "jpg", "jpeg", "bmp", "gif", "webp"]:
             return redact_image(file_location, redaction_level, custom_types_list)
@@ -275,15 +296,15 @@ async def redact(
             return redact_pdf(file_location, redaction_level, custom_types_list)
         else:
             return JSONResponse(status_code=400, content={"error": "Unsupported file type"})
-
     except Exception as e:
-        print("Processing error:", traceback.format_exc())
+        logging.error(f"Processing error: {traceback.format_exc()}")
         return JSONResponse(status_code=500, content={"error": f"Processing failed: {str(e)}"})
-
     finally:
         try:
             if os.path.exists(file_location):
                 os.remove(file_location)
         except Exception as cleanup_err:
-            print("Cleanup error:", cleanup_err)
+            logging.warning(f"Cleanup error: {cleanup_err}")
+        except Exception as cleanup_err:
+            logging.warning(f"Cleanup error: {cleanup_err}")
 import os
