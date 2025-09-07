@@ -1,0 +1,52 @@
+Fictional Medical Record - [REDACTED]
+Patient Information
+Name: [REDACTED]
+[REDACTED]: [REDACTED]
+Gender: Female
+Ethnicity: Caucasian
+Address: [REDACTED] [REDACTED], [REDACTED], CO 8001[REDACTED]
+Phone: ([REDACTED]) [REDACTED]-729[REDACTED]
+Email: [REDACTED]
+[REDACTED]: [REDACTED]-8[REDACTED]-1937
+Insurance Information
+Insurance Provider: Blue Cross Blue Shield of Illinois (BCBSIL)
+Plan Type: Blue Choice Preferred [REDACTED]
+Member ID: ILX983[REDACTED]72516
+Group Number: 350712
+Policy Effective Date: 01/01/2023
+Payer ID: [REDACTED]
+[REDACTED] (Left Breast)
+ICD-[REDACTED] Code: C50.912
+Date of Diagnosis: [REDACTED]
+Oncologist: Dr. [REDACTED], [REDACTED] ([REDACTED]: [REDACTED])
+[REDACTED] University of Colorado Cancer Center
+Medical History
+- Hypertension
+- Type [REDACTED] Diabetes
+- Family History of [REDACTED] (mother)
+Current Medications
+- Metformin [REDACTED]mg BID
+- Lisinopril [REDACTED]mg [REDACTED]Fictional Medical Record - [REDACTED]
+- Tamoxifen 20mg [REDACTED]
+[REDACTED] (5/[REDACTED]/2025): Suspicious mass, [REDACTED] ([REDACTED]): Positive for malignancy
+- BRCA1/BRCA2: Negative
+Treatment Plan
+- Surgery Scheduled: [REDACTED] (8/5/2025)
+- Chemotherapy (Post-op): [REDACTED] cycles of [REDACTED] Pending surgical margins
+[REDACTED] Signature
+[REDACTED] by: Dr. [REDACTED], [REDACTED]
+[REDACTED]: [REDACTED]
+Date: [REDACTED], 2025Fictional Medical Record - [REDACTED]
+Attachment: Pathology Report Summary
+Patient: [REDACTED]
+[REDACTED]: 03/12/1975
+Specimen: Left Breast Tissue Biopsy
+Date of Collection: 05/19/2025
+Date of Report: 0[REDACTED]
+Diagnosis:
+Invasive ductal carcinoma, grade [REDACTED].
+[REDACTED] cells are [REDACTED]-positive, PR-positive, H[REDACTED]2-negative.
+Margins: Not applicable (core biopsy).
+Recommendation: Surgical excision and staging.
+Pathologist: Dr. [REDACTED], [REDACTED]
+Facility: University of Colorado Pathology Lab

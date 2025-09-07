@@ -1,0 +1,41 @@
+[
+  {
+    "id": "416099c1-4cd3-4bc4-b601-3f69e8bc27c7",
+    "file": "redacted_416099c1-4cd3-4bc4-b601-3f69e8bc27c7.pdf",
+    "timestamp": "2025-09-06T21:49:42.405815"
+  },
+  {
+    "id": "a384e397-f3f7-41e4-8d43-625a92c5d29b",
+    "file": "redacted_a384e397-f3f7-41e4-8d43-625a92c5d29b.pdf",
+    "timestamp": "2025-09-06T21:52:04.431138"
+  },
+  {
+    "id": "4e113f24-7bc9-43fa-aa15-4c15a6aac046",
+    "file": "redacted_4e113f24-7bc9-43fa-aa15-4c15a6aac046.pdf",
+    "timestamp": "2025-09-06T21:54:48.677478"
+  },
+  {
+    "id": "7dec201c-ea17-456e-87ae-6e33d5c3725c",
+    "file": "redacted_7dec201c-ea17-456e-87ae-6e33d5c3725c.pdf",
+    "timestamp": "2025-09-07T10:15:48.703627",
+    "processing_time": 4.852076768875122
+  },
+  {
+    "id": "c340d851-0d96-4826-8780-3c6676574df6",
+    "file": "redacted_c340d851-0d96-4826-8780-3c6676574df6.pdf",
+    "timestamp": "2025-09-07T11:02:38.913905",
+    "processing_time": 2.7817912101745605
+  },
+  {
+    "id": "282de024-3007-437c-967e-6ff3f638acf9",
+    "file": "redacted_282de024-3007-437c-967e-6ff3f638acf9.pdf",
+    "timestamp": "2025-09-07T11:02:55.638369",
+    "processing_time": 2.1243836879730225
+  },
+  {
+    "id": "6ec8cc1e-b2a9-45f8-8d47-8459ac902472",
+    "file": "redacted_6ec8cc1e-b2a9-45f8-8d47-8459ac902472.pdf",
+    "timestamp": "2025-09-07T11:15:31.346002",
+    "processing_time": 2.2164409160614014
+  }
+]

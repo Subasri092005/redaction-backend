@@ -1,0 +1,63 @@
+[REDACTED].A.M
+kisshore.a.m.[REDACTED][REDACTED] [REDACTED] kisshoreAM kisshore A M
+Chennai
+PROFILE EDUCATION
+Enthusiastic and detail-oriented [REDACTED] AND COMMUNICATION
+Communication Engineering student with [REDACTED]
+strong foundation in [REDACTED], C, [REDACTED], and web [REDACTED] – [REDACTED] | Chennai
+technologies. CGPA:8.00
+Experienced in building responsive web
+HSC
+applications and integrating modern frameworks
+[REDACTED]
+to enhance functionality and user experience.
+Committed to continuous learning and [REDACTED] – [REDACTED] | Chengalpattu
+innovation in software engineering and
+SSLC
+technology driven solutions
+[REDACTED]
+[REDACTED] – [REDACTED] | [REDACTED] TOOL SKILLS
+Technologies: Angular, [REDACTED], [REDACTED], [REDACTED]
+PYTHON ANGULAR C JAVA
+[REDACTED] the frontend of a Resume Parser Tool
+that allows users to upload resumes and extracts [REDACTED] JAVASCRIPT [REDACTED] EXCEL
+key details such as name, skills, and email.
+Designed a responsive and user-friendly [REDACTED] to PROFESSIONAL EXPERIENCE
+enhance accessibility.
+WEB DEVELOPER, intern
+ANTI SLEEP ALARM FOR DRIVERS
+Present | chennai
+[REDACTED] an Anti-Sleep Alarm System designed
+[REDACTED] and optimized dynamic web interfaces
+to prevent accidents caused by drowsy driving.
+using [REDACTED], [REDACTED], Angular, and [REDACTED]. Built
+The system detects driver fatigue using a piezo
+responsive and reusable [REDACTED] components, ensuring
+buzzer and relay mechanism, triggering an alert
+a seamless user experience across devices.
+when the driver shows signs of sleepiness. By
+providing instant warnings, this tool aims to
+CERTIFICATES
+enhance road safety and reduce accidents caused
+by drowsy driving. Foundation of Cyber Security
+FACE DETECTION [REDACTED]
+[REDACTED], OpenCV, [REDACTED]
+Embedded Systems(NPTEL)
+[REDACTED] a real-time Face Detection System
+using [REDACTED] and OpenCV with [REDACTED] MongoDB
+classifiers. The system accurately identifies
+IOT
+human faces and highlights them with bounding
+boxes in the video feed. It features a user-friendly
+RESEARCH PAPER
+interface that runs without requiring command-
+line interaction. ENTERPRISE RESOURCE PLANNING
+(Work in progress)
+PARTICIPATION
+LANGUAGES
+HACKATHON, [REDACTED] india hackathon
+[REDACTED]
+WORKSHOP, [REDACTED] AT IITM
+Tamil
+TVS Credit IT challenge
+TCS CODEVITA
