@@ -7,7 +7,7 @@ import json
 import datetime
 import time
 import pytesseract
-
+pytesseract.pytesseract.tesseract_cmd = "/usr/bin/tesseract"
 from PIL import Image, ImageDraw
 import pdfplumber
 import spacy
@@ -18,13 +18,15 @@ from reportlab.platypus import SimpleDocTemplate, Paragraph
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib.pagesizes import letter
 import os
-pytesseract.pytesseract.tesseract_cmd = "/usr/bin/tesseract"
+
 
 
 app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:8080"],
+    allow_origins=[
+    "http://localhost:8080",
+    "https://redaction-frontend.vercel.app"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"]
@@ -252,6 +254,7 @@ async def redact(
         with open(file_location, "wb") as buffer:
             buffer.write(await file.read())
 
+
         ext = file.filename.lower().split('.')[-1]
         # Parse custom_types if provided
         custom_types_list = None
@@ -260,6 +263,11 @@ async def redact(
                 custom_types_list = json.loads(custom_types)
             except Exception:
                 custom_types_list = [s.strip() for s in custom_types.split(",") if s.strip()]
+
+        # Logging for debugging
+        print("File received:", file.filename)
+        print("Redaction level:", redaction_level)
+        print("Custom types:", custom_types_list)
 
         if ext in ["png", "jpg", "jpeg", "bmp", "gif", "webp"]:
             return redact_image(file_location, redaction_level, custom_types_list)
