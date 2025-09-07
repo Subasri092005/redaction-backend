@@ -7,7 +7,7 @@ import json
 import datetime
 import time
 import pytesseract
-pytesseract.pytesseract.tesseract_cmd = r"C:\\Program Files\\Tesseract-OCR\\tesseract.exe"
+
 from PIL import Image, ImageDraw
 import pdfplumber
 import spacy
@@ -18,6 +18,8 @@ from reportlab.platypus import SimpleDocTemplate, Paragraph
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib.pagesizes import letter
 import os
+pytesseract.pytesseract.tesseract_cmd = "/usr/bin/tesseract"
+
 
 app = FastAPI()
 app.add_middleware(
