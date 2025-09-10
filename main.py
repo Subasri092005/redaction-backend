@@ -86,7 +86,7 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:8080",
-        "https://redaction-frontend.vercel.app"
+        "https://redaction-frontend-pink.vercel.app/"
     ],
     allow_credentials=True,
     allow_methods=["*"],
