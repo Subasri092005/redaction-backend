@@ -20,6 +20,36 @@ from reportlab.platypus import SimpleDocTemplate, Paragraph
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib.pagesizes import letter
 
+from google.cloud import vision
+from google.oauth2 import service_account
+
+def extract_text_blocks(image_path):
+    info = {
+        "type": os.getenv("GOOGLE_TYPE"),
+        "project_id": os.getenv("GOOGLE_PROJECT_ID"),
+        "private_key_id": os.getenv("GOOGLE_PRIVATE_KEY_ID"),
+        "private_key": os.getenv("GOOGLE_PRIVATE_KEY").replace("\\n", "\n"),
+        "client_email": os.getenv("GOOGLE_CLIENT_EMAIL"),
+        "client_id": os.getenv("GOOGLE_CLIENT_ID"),
+    }
+
+    credentials = service_account.Credentials.from_service_account_info(info)
+    client = vision.ImageAnnotatorClient(credentials=credentials)
+
+    with open(image_path, "rb") as image_file:
+        content = image_file.read()
+
+    image = vision.Image(content=content)
+    response = client.text_detection(image=image)
+
+    blocks = []
+    for annotation in response.text_annotations[1:]:  # Skip full text at index 0
+        blocks.append({
+            "text": annotation.description,
+            "bounds": [(v.x, v.y) for v in annotation.bounding_poly.vertices]
+        })
+    return blocks
+
 # Setup logging
 logging.basicConfig(
     level=logging.INFO,
@@ -89,17 +119,15 @@ def redact_text(text, redaction_level="full", custom_types=None):
     redacted = re.sub(r"\d{1,5}\s+(?:[A-Za-z]+\s){1,3}(Street|St|Avenue|Ave|Road|Rd|Boulevard|Blvd|Lane|Ln|Drive|Dr|Court|Ct|Square|Sq|Place|Pl|Terrace|Ter)", "[REDACTED]", redacted)
     redacted = re.sub(r"\b\d{8,12}\b", "[REDACTED]", redacted)
     return redacted
-
-# Redact entities in images by blacking out detected text regions
 def redact_image(file_path, redaction_level="full", custom_types=None):
     start_time = time.time()
     image = Image.open(file_path)
     if image.mode != 'RGB':
         image = image.convert('RGB')
-    data = pytesseract.image_to_data(image, output_type=pytesseract.Output.DICT)
-    n_boxes = len(data['level'])
+
+    blocks = extract_text_blocks(file_path)
     draw = ImageDraw.Draw(image)
-    # Choose which entity types to redact
+
     if redaction_level == "full":
         entity_types = FULL_ENTITIES
     elif redaction_level == "partial":
@@ -108,23 +136,20 @@ def redact_image(file_path, redaction_level="full", custom_types=None):
         entity_types = custom_types
     else:
         entity_types = FULL_ENTITIES
-    for i in range(n_boxes):
-        text = data['text'][i]
-        if text.strip() == "":
-            continue
-        doc = nlp(text)
+
+    for block in blocks:
+        doc = nlp(block["text"])
         for ent in doc.ents:
             if ent.label_ in entity_types:
-                (x, y, w, h) = (data['left'][i], data['top'][i], data['width'][i], data['height'][i])
-                draw.rectangle([x, y, x + w, y + h], fill="black")
-    # Save to redacted_files directory with unique name
+                if len(block["bounds"]) == 4:
+                    draw.polygon(block["bounds"], fill="black")
+
     redacted_dir = os.path.join(os.path.dirname(__file__), 'redacted_files')
     os.makedirs(redacted_dir, exist_ok=True)
     unique_id = str(uuid.uuid4())
     out_path = os.path.join(redacted_dir, f'redacted_{unique_id}.pdf')
     image.save(out_path, format="PDF")
     processing_time = time.time() - start_time
-    # Save metadata
     save_redaction_metadata(unique_id, out_path, processing_time)
     output = open(out_path, 'rb')
     return StreamingResponse(
@@ -133,21 +158,26 @@ def redact_image(file_path, redaction_level="full", custom_types=None):
         headers={"Content-Disposition": f"attachment; filename=redacted_{unique_id}.pdf"}
     )
 
-# Redact entities in PDF by rendering each page as image, blacking out, and reassembling
+
 def redact_pdf(file_path, redaction_level="full", custom_types=None):
     import pdfplumber
     from PIL import Image
     from PyPDF2 import PdfWriter
     import tempfile
+
     output_pdf = PdfWriter()
     start_time = time.time()
+
     with pdfplumber.open(file_path) as pdf:
         for page in pdf.pages:
             pil_img = page.to_image(resolution=200).original.convert('RGB')
-            data = pytesseract.image_to_data(pil_img, output_type=pytesseract.Output.DICT)
-            n_boxes = len(data['level'])
+
+            temp_img_path = f"temp_page_{uuid.uuid4()}.png"
+            pil_img.save(temp_img_path)
+
+            blocks = extract_text_blocks(temp_img_path)
             draw = ImageDraw.Draw(pil_img)
-            # Choose which entity types to redact
+
             if redaction_level == "full":
                 entity_types = FULL_ENTITIES
             elif redaction_level == "partial":
@@ -156,15 +186,16 @@ def redact_pdf(file_path, redaction_level="full", custom_types=None):
                 entity_types = custom_types
             else:
                 entity_types = FULL_ENTITIES
-            for i in range(n_boxes):
-                text = data['text'][i]
-                if text.strip() == "":
-                    continue
-                doc = nlp(text)
+
+            for block in blocks:
+                doc = nlp(block["text"])
                 for ent in doc.ents:
                     if ent.label_ in entity_types:
-                        (x, y, w, h) = (data['left'][i], data['top'][i], data['width'][i], data['height'][i])
-                        draw.rectangle([x, y, x + w, y + h], fill="black")
+                        if len(block["bounds"]) == 4:
+                            draw.polygon(block["bounds"], fill="black")
+
+            os.remove(temp_img_path)
+
             temp_pdf = tempfile.NamedTemporaryFile(suffix='.pdf', delete=False)
             try:
                 pil_img.save(temp_pdf, format='PDF')
@@ -174,7 +205,7 @@ def redact_pdf(file_path, redaction_level="full", custom_types=None):
                 output_pdf.add_page(temp_reader.pages[0])
             finally:
                 os.unlink(temp_pdf.name)
-    # Save to redacted_files directory with unique name
+
     redacted_dir = os.path.join(os.path.dirname(__file__), 'redacted_files')
     os.makedirs(redacted_dir, exist_ok=True)
     unique_id = str(uuid.uuid4())
@@ -189,6 +220,7 @@ def redact_pdf(file_path, redaction_level="full", custom_types=None):
         media_type="application/pdf",
         headers={"Content-Disposition": f"attachment; filename=redacted_{unique_id}.pdf"}
     )
+
 
 # Save metadata for each redacted file, now with processing_time
 def save_redaction_metadata(unique_id, file_path, processing_time):
