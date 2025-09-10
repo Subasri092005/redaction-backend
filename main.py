@@ -31,6 +31,8 @@ def extract_text_blocks(image_path):
         "private_key": os.getenv("GOOGLE_PRIVATE_KEY").replace("\\n", "\n"),
         "client_email": os.getenv("GOOGLE_CLIENT_EMAIL"),
         "client_id": os.getenv("GOOGLE_CLIENT_ID"),
+        "token_uri": os.getenv("GOOGLE_TOKEN_URI"),
+
     }
 
     credentials = service_account.Credentials.from_service_account_info(info)
