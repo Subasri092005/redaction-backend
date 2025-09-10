@@ -20,37 +20,31 @@ from reportlab.platypus import SimpleDocTemplate, Paragraph
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib.pagesizes import letter
 
-from google.cloud import vision
-from google.oauth2 import service_account
+
+
+import requests
 
 def extract_text_blocks(image_path):
-    info = {
-        "type": os.getenv("GOOGLE_TYPE"),
-        "project_id": os.getenv("GOOGLE_PROJECT_ID"),
-        "private_key_id": os.getenv("GOOGLE_PRIVATE_KEY_ID"),
-        "private_key": os.getenv("GOOGLE_PRIVATE_KEY").replace("\\n", "\n"),
-        "client_email": os.getenv("GOOGLE_CLIENT_EMAIL"),
-        "client_id": os.getenv("GOOGLE_CLIENT_ID"),
-        "token_uri": os.getenv("GOOGLE_TOKEN_URI"),
+    api_key = os.getenv("OCR_SPACE_API_KEY")
 
-    }
-
-    credentials = service_account.Credentials.from_service_account_info(info)
-    client = vision.ImageAnnotatorClient(credentials=credentials)
-
-    with open(image_path, "rb") as image_file:
-        content = image_file.read()
-
-    image = vision.Image(content=content)
-    response = client.text_detection(image=image)
-
+    with open(image_path, 'rb') as f:
+        response = requests.post(
+            'https://api.ocr.space/parse/image',
+            files={'file': f},
+            data={'apikey': api_key, 'language': 'eng'}
+        )
+    result = response.json()
     blocks = []
-    for annotation in response.text_annotations[1:]:  # Skip full text at index 0
-        blocks.append({
-            "text": annotation.description,
-            "bounds": [(v.x, v.y) for v in annotation.bounding_poly.vertices]
-        })
+    if 'ParsedResults' in result:
+        text = result['ParsedResults'][0].get('ParsedText', '')
+        for line in text.split('\n'):
+            if line.strip():
+                blocks.append({
+                    "text": line.strip(),
+                    "bounds": [(0, 0), (0, 0), (0, 0), (0, 0)]  # Dummy bounds
+                })
     return blocks
+
 
 # Setup logging
 logging.basicConfig(
@@ -62,31 +56,12 @@ logging.basicConfig(
         # logging.FileHandler("backend.log")
     ]
 )
-
-
-
-# Robust Tesseract path detection
-TESSERACT_PATHS = ["/usr/bin/tesseract", "/usr/local/bin/tesseract"]
-tess_found = False
-for path in TESSERACT_PATHS:
-    if os.path.exists(path):
-        pytesseract.pytesseract.tesseract_cmd = path
-        logging.info(f"Using tesseract at: {path}")
-        tess_found = True
-        break
-if not tess_found:
-    logging.info(f"Checked paths: {TESSERACT_PATHS}. Using system tesseract from PATH (no hardcoded path found)")
-
-
-
-
-
 app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:8080",
-        "https://redaction-frontend-pink.vercel.app/"
+        "https://redaction-frontend-pink.vercel.app"
     ],
     allow_credentials=True,
     allow_methods=["*"],
@@ -143,9 +118,7 @@ def redact_image(file_path, redaction_level="full", custom_types=None):
         doc = nlp(block["text"])
         for ent in doc.ents:
             if ent.label_ in entity_types:
-                if len(block["bounds"]) == 4:
-                    draw.polygon(block["bounds"], fill="black")
-
+                pass
     redacted_dir = os.path.join(os.path.dirname(__file__), 'redacted_files')
     os.makedirs(redacted_dir, exist_ok=True)
     unique_id = str(uuid.uuid4())
@@ -193,8 +166,7 @@ def redact_pdf(file_path, redaction_level="full", custom_types=None):
                 doc = nlp(block["text"])
                 for ent in doc.ents:
                     if ent.label_ in entity_types:
-                        if len(block["bounds"]) == 4:
-                            draw.polygon(block["bounds"], fill="black")
+                        pass
 
             os.remove(temp_img_path)
 
