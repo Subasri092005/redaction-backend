@@ -44,6 +44,27 @@ nlp = spacy.load("en_core_web_sm")
 FULL_ENTITIES = ["PERSON", "GPE", "ORG", "DATE", "CARDINAL", "LOC", "NORP", "FAC", "EVENT", "PRODUCT", "LANGUAGE"]
 PARTIAL_ENTITIES = ["PERSON", "CARDINAL", "LOC", "NORP"]
 
+def get_entity_types(redaction_level, consent_level, custom_types=None):
+    if consent_level == "none":
+        return FULL_ENTITIES
+    elif consent_level == "limited":
+        return PARTIAL_ENTITIES
+    elif consent_level == "full":
+        if redaction_level == "custom" and custom_types:
+            return custom_types
+        else:
+            return []  # No redaction
+    else:
+        # fallback to redaction level
+        if redaction_level == "full":
+            return FULL_ENTITIES
+        elif redaction_level == "partial":
+            return PARTIAL_ENTITIES
+        elif redaction_level == "custom" and custom_types:
+            return custom_types
+        else:
+            return FULL_ENTITIES
+
 def extract_text_blocks(image_path):
     api_key = os.getenv("OCR_SPACE_API_KEY")
     if not api_key:
@@ -74,17 +95,10 @@ def extract_text_blocks(image_path):
                     lines.append({"text": line_text, "words": words})
     return lines
 
-def redact_text(text, redaction_level="full", custom_types=None):
+def redact_text(text, redaction_level="full", consent_level="none", custom_types=None):
     doc = nlp(text)
     redacted = text
-    if redaction_level == "full":
-        entity_types = FULL_ENTITIES
-    elif redaction_level == "partial":
-        entity_types = PARTIAL_ENTITIES
-    elif redaction_level == "custom" and custom_types:
-        entity_types = custom_types
-    else:
-        entity_types = FULL_ENTITIES
+    entity_types = get_entity_types(redaction_level, consent_level, custom_types)
     for ent in doc.ents:
         if ent.label_ in entity_types:
             redacted = redacted.replace(ent.text, "[REDACTED]")
@@ -95,21 +109,14 @@ def redact_text(text, redaction_level="full", custom_types=None):
     redacted = re.sub(r"\b\d{8,12}\b", "[REDACTED]", redacted)
     return redacted
 
-def redact_image(file_path, redaction_level="full", custom_types=None):
+def redact_image(file_path, redaction_level="full", consent_level="none", custom_types=None):
     start_time = time.time()
     image = Image.open(file_path)
     if image.mode != 'RGB':
         image = image.convert('RGB')
     blocks = extract_text_blocks(file_path)
     draw = ImageDraw.Draw(image)
-    if redaction_level == "full":
-        entity_types = FULL_ENTITIES
-    elif redaction_level == "partial":
-        entity_types = PARTIAL_ENTITIES
-    elif redaction_level == "custom" and custom_types:
-        entity_types = custom_types
-    else:
-        entity_types = FULL_ENTITIES
+    entity_types = get_entity_types(redaction_level, consent_level, custom_types)
     for block in blocks:
         doc = nlp(block["text"])
         for ent in doc.ents:
@@ -125,7 +132,7 @@ def redact_image(file_path, redaction_level="full", custom_types=None):
                         min_top = min(min_top, word["top"])
                         max_right = max(max_right, word["left"] + word["width"])
                         max_bottom = max(max_bottom, word["top"] + word["height"])
-                    curr_pos += word_len + 1  # +1 for space
+                    curr_pos += word_len + 1
                 if min_left < float('inf'):
                     bounds = [
                         (min_left, min_top),
@@ -137,7 +144,8 @@ def redact_image(file_path, redaction_level="full", custom_types=None):
     processing_time = time.time() - start_time
     return image, processing_time
 
-def redact_pdf(file_path, redaction_level="full", custom_types=None):
+
+def redact_pdf(file_path, redaction_level="full", consent_level="none", custom_types=None):
     output_pdf = PdfWriter()
     start_time = time.time()
     with pdfplumber.open(file_path) as pdf:
@@ -147,14 +155,7 @@ def redact_pdf(file_path, redaction_level="full", custom_types=None):
             pil_img.save(temp_img_path)
             blocks = extract_text_blocks(temp_img_path)
             draw = ImageDraw.Draw(pil_img)
-            if redaction_level == "full":
-                entity_types = FULL_ENTITIES
-            elif redaction_level == "partial":
-                entity_types = PARTIAL_ENTITIES
-            elif redaction_level == "custom" and custom_types:
-                entity_types = custom_types
-            else:
-                entity_types = FULL_ENTITIES
+            entity_types = get_entity_types(redaction_level, consent_level, custom_types)
             for block in blocks:
                 doc = nlp(block["text"])
                 for ent in doc.ents:
@@ -190,6 +191,7 @@ def redact_pdf(file_path, redaction_level="full", custom_types=None):
                 os.unlink(temp_pdf.name)
     processing_time = time.time() - start_time
     return output_pdf, processing_time
+
 
 # Save metadata
 def save_redaction_metadata(unique_id, original_path, redacted_path, processing_time):
@@ -267,6 +269,7 @@ from fastapi import Form
 async def redact(
     file: UploadFile = File(...),
     redaction_level: str = Form("full"),
+    consent_level: str = Form("none"),
     custom_types: str = Form(None)
 ):
     file_location = f"temp_{file.filename}"
@@ -287,22 +290,28 @@ async def redact(
                 custom_types_list = [s.strip() for s in custom_types.split(",") if s.strip()]
         logging.info(f"File received: {file.filename}")
         logging.info(f"Redaction level: {redaction_level}")
+        logging.info(f"Consent level: {consent_level}")
         logging.info(f"Custom types: {custom_types_list}")
         if ext in ["png", "jpg", "jpeg", "bmp", "gif", "webp"]:
-            # Save original as PDF
             Image.open(file_location).save(original_path, format="PDF")
-            redacted_image, processing_time = redact_image(file_location, redaction_level, custom_types_list)
+            redacted_image, processing_time = redact_image(file_location, redaction_level, consent_level, custom_types_list)
             redacted_image.save(redacted_path, format="PDF")
         elif ext == "pdf":
-            # Save original as is
             shutil.copy(file_location, original_path)
-            redacted_pdf, processing_time = redact_pdf(file_location, redaction_level, custom_types_list)
+            redacted_pdf, processing_time = redact_pdf(file_location, redaction_level, consent_level, custom_types_list)
             with open(redacted_path, 'wb') as f:
                 redacted_pdf.write(f)
         else:
             return JSONResponse(status_code=400, content={"error": "Unsupported file type"})
-        save_redaction_metadata(unique_id, original_path, redacted_path, processing_time)
-        return JSONResponse({"id": unique_id, "message": "Redacted successfully"})
+        save_redaction_metadata(unique_id, original_path, redacted_path, processing_time, consent_level)
+        return JSONResponse({
+            "id": unique_id,
+            "message": "Redacted successfully",
+            "processing_time": processing_time,
+            "redaction_level": redaction_level,
+            "consent_level": consent_level,
+            "custom_types": custom_types_list
+        })
     except Exception as e:
         logging.error(f"Processing error: {traceback.format_exc()}")
         return JSONResponse(status_code=500, content={"error": f"Processing failed: {str(e)}"})
