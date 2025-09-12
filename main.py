@@ -194,7 +194,7 @@ def redact_pdf(file_path, redaction_level="full", consent_level="none", custom_t
 
 
 # Save metadata
-def save_redaction_metadata(unique_id, original_path, redacted_path, processing_time):
+def save_redaction_metadata(unique_id, original_path, redacted_path, processing_time,consent_level):
     meta_path = os.path.join(os.path.dirname(__file__), 'redacted_files', 'history.json')
     entry = {
         'id': unique_id,
